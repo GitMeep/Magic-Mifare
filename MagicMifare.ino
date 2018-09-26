@@ -26,10 +26,6 @@
 MFRC522 mfrc522(SS_PIN, RST_PIN);
 MFRC522Hack mfrc522hack(&mfrc522);
 
-MFRC522::MIFARE_Key key;
-
-MFRC522::StatusCode status;
-
 void setup() 
 {
   Serial.begin(9600);   // Initiate a serial communication
@@ -38,7 +34,7 @@ void setup()
 
 }
 
-void format();
+void reset();
 void setUid();
 
 void loop() 
@@ -69,7 +65,7 @@ void loop()
   
   switch(option) {
     case 1:
-      format();
+      reset();
       break;
     case 2:
       setUid();
@@ -82,6 +78,8 @@ void loop()
     
   }
 
+  // This is here to let you keep the card on the reader,
+  // otherwise you would have to remove it, and put it back again each time
   mfrc522.PICC_HaltA();
   mfrc522.PCD_StopCrypto1();
   mfrc522.PCD_SoftPowerDown();
@@ -92,11 +90,14 @@ void loop()
   
 }
 
-void format() {
+void reset() {
   Serial.println("Resetting card!");
 
+  MFRC522::StatusCode status;
   byte uid[4] = { 0xDE, 0xAD, 0xBE, 0xEF }; 
 
+  // This opens the backdoor on the chineese cards, which lets you write to whatever block
+  // you want, you dont even need to authenticate.
   mfrc522hack.MIFARE_OpenUidBackdoor(false);
   
   const int noOfSectors = 16;
@@ -106,6 +107,7 @@ void format() {
                   /*Acess Conditions*/ 0xFF, 0x07, 0x80, 0x69,
                              /*Key B*/ 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 
+  // Sector 0 gets some special treatment, because of the manufacturer block
   status = mfrc522.MIFARE_Write(1, infill, 16);
   if(status != MFRC522::STATUS_OK) {
     Serial.println("Could not write to block 1");
@@ -130,7 +132,7 @@ void format() {
     return;
   }
 
-  //Loop through all blocks and set
+  //Loop through the rest of the blocks, clear them and reset their trailer (keys and access conditions)
   for(int sector = 1; sector < noOfSectors; sector++) {
     for(int block = 0; block < blocksPerSector - 1; block++) { //skip trailer block
 
@@ -151,12 +153,12 @@ void format() {
       Serial.println(mfrc522.GetStatusCodeName(status));
       return;
     }
+    //Status indicator, so you can see that something is happening!
     Serial.print(".");
   }
   Serial.println();
   
   Serial.println("Done!");
-  return;
   
 }
 
@@ -168,6 +170,7 @@ void setUid() {
 
   byte uid[4] = { 0x00, 0x00, 0x00, 0x00};
 
+  // This for loops parses the hex string input, and stores it as bytes in the uid array
   int index = 0;
   for(int bt = 0; bt < 4; bt++) {
     byte nl = (byte)input.charAt(bt*2);

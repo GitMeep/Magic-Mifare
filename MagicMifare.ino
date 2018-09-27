@@ -36,9 +36,19 @@ void setup()
 
 void reset();
 void setUid();
+void printInfo();
 
 void loop() 
 {
+  int option = 0;
+  Serial.println("Plase enter an option:");
+  Serial.println("1:  Factory Reset (Zerofill data blocks and reset trailers, doesn't change UID)");
+  Serial.println("2:  Change UID");
+  Serial.println("3:  Print info");
+  Serial.println("4:  Just print UID");
+
+  while(!Serial.available()) {delay(5);}
+  option = Serial.parseInt();
 
   Serial.println("Approximate your card to the reader...\n");
   
@@ -53,15 +63,6 @@ void loop()
     Serial.print(mfrc522.uid.uidByte[i], HEX);
   } 
   Serial.println();
-
-  int option = 0;
-  Serial.println("Plase enter an option:");
-  Serial.println("1:  Factory Reset (Zerofill data blocks and reset trailers, doesn't change UID)");
-  Serial.println("2:  Change UID");
-  Serial.println("3:  Do nothing");
-
-  while(!Serial.available()) {delay(5);}
-  option = Serial.parseInt();
   
   switch(option) {
     case 1:
@@ -71,6 +72,9 @@ void loop()
       setUid();
       break;
     case 3:
+      printInfo();
+      break;
+    case 4:
       break;
     default:
       Serial.println("Please chose a valid opition!");
@@ -83,7 +87,6 @@ void loop()
   mfrc522.PICC_HaltA();
   mfrc522.PCD_StopCrypto1();
   mfrc522.PCD_SoftPowerDown();
-  delay(500);
   mfrc522.PCD_SoftPowerUp();
 
   Serial.println();
@@ -199,5 +202,9 @@ void setUid() {
   if ( mfrc522hack.MIFARE_SetUid(uid, (byte)4, true) ) {
     Serial.println("Wrote new UID to card");
   }
+}
+
+void printInfo() {
+  mfrc522.PICC_DumpToSerial(&(mfrc522.uid));
 }
 

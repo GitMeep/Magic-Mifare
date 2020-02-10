@@ -50,7 +50,7 @@ void loop()
   while(!Serial.available()) {delay(5);}
   option = Serial.parseInt();
 
-  Serial.println("Approximate your card to the reader...\n");
+  Serial.println("Place you'r card on the reader...\n");
   
   // Look for new cards
   while( !mfrc522.PICC_IsNewCardPresent()){delay(5);}
@@ -99,7 +99,7 @@ void reset() {
   MFRC522::StatusCode status;
   byte uid[4] = { 0xDE, 0xAD, 0xBE, 0xEF }; 
 
-  // This opens the backdoor on the chineese cards, which lets you write to whatever block
+  // This opens the backdoor on the chinese clone cards, which lets you write to whatever block
   // you want, you dont even need to authenticate.
   mfrc522hack.MIFARE_OpenUidBackdoor(false);
   
